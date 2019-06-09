@@ -26,15 +26,29 @@
 #define AIRCONTROLLER_H_
 
 #include "Singleton.h"
+#include "Flight.h"
+#include "Airport.h"
 
 namespace atcsim{
 
-class AirController: public Singleton<AirController> {
+class AirController: public Singleton<AirController>
+{
 public:
 	AirController();
 	virtual ~AirController();
 
+	float distanceAv_Av(Flight *f1, Flight *f2);
+	float distanceFlightAirport(Flight *f);
+	void anticollisionSystem(Flight *f1);
+
+	void finalAprox(Flight *f);
+	void landing(Flight *f);
+
+	void goInfine(Flight *it);
+	void blackHole(Flight *it);
+
 	void doWork();
+
 };
 
 };  // namespace atcsim

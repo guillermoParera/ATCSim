@@ -50,7 +50,9 @@ public:
 	bool routed() { return !route.empty();};
 	Position getPosition() { return pos;};
 	float getInclination() { return inclination;};
+	void setInclination(float incl) {inclination = incl;};
 	float getBearing() { return bearing;};
+	void setBearing(float b) {bearing = b;};
 	float getInitBearing() { return init_bearing;};
 	float getSpeed() { return speed;};
 	void setSpeed(float tgt_speed) {speed = checkSpeedLimits(tgt_speed);}
@@ -62,6 +64,21 @@ public:
 	bool getInStorm() {return inStorm;};
 	void setInStorm(bool in) {inStorm=in;};
 
+	bool getInFinal() {return inFinal;};
+	void setInFinal(bool in) {inFinal=in;};
+
+	bool getInInfinite() {return inInfinite;};
+	void setInInfinite(bool in) {inInfinite=in;};
+
+	bool getNewInIntinite() {return newInIntinite;};
+	void setNewInIntinite(bool in) {newInIntinite=in;};
+
+	bool getInBlackHole() {return inBlackHole;};
+	void setInBlackHole(bool in) {inBlackHole=in;};
+
+	bool getNewInBlackHole() {return newInBlackHole;};
+	void setNewInBlackHole(bool in) {newInBlackHole=in;};
+
 private:
 	std::string id;
 	Position pos, last_pos;
@@ -71,6 +88,14 @@ private:
 	bool focused;
 
 	bool inStorm;
+
+	bool inFinal;
+
+	bool inInfinite;
+	bool newInIntinite;
+
+	bool inBlackHole;
+	bool newInBlackHole;
 
 	float points;
 

@@ -28,6 +28,7 @@
 #include "Position.h"
 #include <list>
 #include <fstream>
+#include <cmath>
 
 namespace atcsim{
 
@@ -40,11 +41,82 @@ AirController::~AirController() {
 	// TODO Auto-generated destructor stub
 }
 
+
+float
+AirController::distanceAv_Av(Flight *f1, Flight *f2)
+{
+	float x1 = f1->getPosition().get_x();
+	float y1 = f1->getPosition().get_y();
+	float z1 = f1->getPosition().get_z();
+	float x2 = f2->getPosition().get_x();
+	float y2 = f2->getPosition().get_y();
+	float z2 = f2->getPosition().get_z();
+
+	return sqrt( (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2) + (z1-z2)*(z1-z2) );
+}
+
+float
+AirController::distanceFlightAirport(Flight *f)
+{
+	float x = f->getPosition().get_x();
+	float y = f->getPosition().get_y();
+	float z = f->getPosition().get_z();
+
+	return sqrt( (x)*(x) + (y)*(y) + (z)*(z) );
+}
+
 void
-AirController::doWork()
+AirController::anticollisionSystem(Flight *f)
 {
   std::list<Flight*> flights = Airport::getInstance()->getFlights();
   std::list<Flight*>::iterator it;
+  for(it = flights.begin(); it!=flights.end(); ++it){
+    if(f != (*it) ){
+      float dist_margen2 = 500;
+      float dist_seguridad2 = 2000 + dist_margen2;
+      float distance = distanceAv_Av(f, *it);
+			float distance_to_airport1 = distanceFlightAirport(f);
+			float distance_to_airport2 = distanceFlightAirport(*it);
+      if (distance < dist_seguridad2){
+        /*float h2 = sqrt(distance * distance + dist_seguridad2 * dist_seguridad2);
+        float alpha2 = asin(dist_seguridad2/h2);
+				*/
+				float alpha2 = asin(5*M_PI/180);
+				float cabeceo = asin(5*M_PI/180);
+
+					if (distance_to_airport1 > distance_to_airport2){
+						//f->setBearing(alpha2);
+						f->setInclination(cabeceo); //sube
+						(*it)->setInclination(-cabeceo); // baja
+						if (f->getInInfinite() == false)
+							f->setInInfinite(true);
+					}else if (distance_to_airport1 < distance_to_airport2){
+						//(*it)->setBearing(-alpha2);
+						(*it)->setInclination( f->getInclination() + cabeceo ); //sube
+						f->setInclination( f->getInclination() - cabeceo ); // baja
+						if ((*it)->getInInfinite() == false)
+							(*it)->setInInfinite(true);
+					}
+
+					if (f->getInInfinite()  && f->getPosition().get_x() < -5000 ){
+						f->setBearing( f->getBearing() + alpha2);
+						(*it)->setBearing( f->getBearing() - alpha2 );
+					}
+//					std::cerr << "ANTIIIIIIIII COLISIOOOOOOOOOOOOOOOOOOOOOON" << '\n';
+    	}
+    }
+  }
+}
+
+void
+AirController::finalAprox(Flight *f)
+{
+	;
+}
+
+void
+AirController::landing(Flight *f)
+{
 
   Position pos0(3500.0, 0.0, 100.0);
   Position pos1(1500.0, 0.0, 50.0);
@@ -62,16 +134,114 @@ AirController::doWork()
   r3.pos = pos3;
   r3.speed = 10.0;
 
-  for(it = flights.begin(); it!=flights.end(); ++it)
-  {
-    if((*it)->getRoute()->empty())
+
+    if(f->getRoute()->empty())
     {
-      (*it)->getRoute()->push_back(r3);
-      (*it)->getRoute()->push_front(r2);
-      (*it)->getRoute()->push_front(r1);
-      (*it)->getRoute()->push_front(r0);
+      f->getRoute()->push_back(r3);
+      f->getRoute()->push_front(r2);
+      f->getRoute()->push_front(r1);
+      f->getRoute()->push_front(r0);
 		}
+}
+
+void
+AirController::blackHole(Flight *f)
+{
+
+	float closeAltitude;
+	float nextAltitude;
+	Route closePoint;
+
+	std::list<Route>::iterator it;
+	for( it = f->getRoute()->begin(); it != f->getRoute()->end(); ++it){
+		closePoint = *it;
 	}
+
+	if( f->getPosition().get_x() <= -10000 ){
+		f->setInBlackHole(true);
+	}
+
+	closeAltitude = closePoint.pos.get_z();
+	nextAltitude = closeAltitude + 1000;
+
+	Position posA(-11000.0, 0.0);
+	Position posB(-16000.0, -5000);
+	Position posC(-16000.0, 5000.0);
+	Position posD(-21000.0, 0.0);
+
+	Route rA, rB, rC, rD;
+
+	rA.pos = posA;
+	rA.speed = 260;
+	rB.pos = posB;
+	rB.speed = 260;
+	rC.pos = posC;
+	rC.speed = 260;
+	rD.pos = posD;
+	rD.speed = 260;
+
+
+	if(f->getNewInBlackHole()){
+		std::cerr << "BLACK HOLEEEEEEEEEEEEEEEEEEEE" << '\n';
+		f->getRoute()->push_back(rA);
+		f->setNewInBlackHole(false);
+	}
+
+//	if( f->getRoute()->size() == 1 && f->getInBlackHole() ){
+		if( closePoint.pos.get_x() == posA.get_x() ){
+			rB.pos.set_z(nextAltitude);
+			f->getRoute()->push_front(rB);
+		}else if( closePoint.pos.get_x() == posB.get_x() && closePoint.pos.get_y() == posB.get_y()){
+			rC.pos.set_z(nextAltitude);
+			f->getRoute()->push_front(rC);
+		}else if( closePoint.pos.get_x() == posC.get_x() && closePoint.pos.get_y() == posC.get_y()){
+			rD.pos.set_z(nextAltitude);
+			f->getRoute()->push_front(rD);
+		}else{
+			rA.pos.set_z(nextAltitude);
+			f->getRoute()->push_front(rA);
+		}
+//	}
+}
+
+
+void
+AirController::goInfine(Flight *f)
+{
+	Position posFustrada(-10000.0, 0.0, 5000.0);
+	Position posA(-11000.0, 0.0);
+
+	Route r0, rA;
+
+	r0.pos = posFustrada;
+	r0.speed = 210;
+
+	if(f->getNewInIntinite())
+		std::cerr << "INFINITOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO" << '\n';
+
+	if( !f->getRoute()->empty() && f->getNewInIntinite() ){
+		f->getRoute()->clear();
+		f->getRoute()->push_front(r0);
+		f->setNewInIntinite(false);
+		blackHole(f);//---------------------
+	}
+}
+
+void
+AirController::doWork()
+{
+  std::list<Flight*> flights = Airport::getInstance()->getFlights();
+  std::list<Flight*>::iterator it;
+
+  for(it = flights.begin(); it!=flights.end(); ++it){
+
+    anticollisionSystem(*it);
+    if( !(*it)->getInInfinite() ){
+			finalAprox(*it);
+			landing(*it);
+		}else
+			goInfine(*it);
+  }
 }
 
 }  // namespace atcsim
