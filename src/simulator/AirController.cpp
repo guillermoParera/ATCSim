@@ -73,7 +73,7 @@ AirController::anticollisionSystem(Flight *f)
   for(it = flights.begin(); it!=flights.end(); ++it){
     if(f != (*it) ){
       float dist_margen2 = 500;
-      float dist_seguridad2 = 2000 + dist_margen2;
+      float dist_seguridad2 = 1500 + dist_margen2;
       float distance = distanceAv_Av(f, *it);
 			float distance_to_airport1 = distanceFlightAirport(f);
 			float distance_to_airport2 = distanceFlightAirport(*it);
@@ -84,6 +84,7 @@ AirController::anticollisionSystem(Flight *f)
 				float alpha2 = asin(5*M_PI/180);
 				float cabeceo = asin(5*M_PI/180);
 
+				if( !f->getInInfinite() ){
 					if (distance_to_airport1 > distance_to_airport2){
 						//f->setBearing(alpha2);
 						f->setInclination(cabeceo); //sube
@@ -97,10 +98,9 @@ AirController::anticollisionSystem(Flight *f)
 						if ((*it)->getInInfinite() == false)
 							(*it)->setInInfinite(true);
 					}
-
-					if (f->getInInfinite()  && f->getPosition().get_x() < -5000 ){
-						f->setBearing( f->getBearing() + alpha2);
-						(*it)->setBearing( f->getBearing() - alpha2 );
+				}else if(f->getPosition().get_x() < -10000 ){
+					/*	f->setBearing( f->getBearing() + alpha2 );
+						(*it)->setBearing( f->getBearing() - alpha2 );*/
 					}
 //					std::cerr << "ANTIIIIIIIII COLISIOOOOOOOOOOOOOOOOOOOOOON" << '\n';
     	}
@@ -162,9 +162,9 @@ AirController::blackHole(Flight *f)
 	nextAltitude = closeAltitude + 550;
 
 	Position posA(-11000.0, 0.0);
-	Position posB(-16000.0, -5000);
+	Position posB(-16000.0, -15000);
 	Position posC(-21000.0, 0.0);
-	Position posD(-16000.0, 5000.0);
+	Position posD(-16000.0, 15000.0);
 
 
 	Route rA, rB, rC, rD;
@@ -185,27 +185,7 @@ AirController::blackHole(Flight *f)
 		f->setNewInBlackHole(false);
 	}
 
-/*
-	if( f->getRoute()->size() == 1 && f->getInBlackHole() ){
-		std::cerr << "SUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUU" << '\n';
-		if( abs(closePoint.pos.get_x() - posA.get_x()) < 200){
-			std::cerr << "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" << '\n';
-			rB.pos.set_z(nextAltitude);
-			f->getRoute()->push_back(rB);
-		}else if( abs(closePoint.pos.get_x() - posB.get_x()) < 200 && abs(closePoint.pos.get_y() - posB.get_y()) <200 ){
-			rC.pos.set_z(nextAltitude);
-			f->getRoute()->push_back(rC);
-		}else if( abs(closePoint.pos.get_x() - posC.get_x()) < 200 ){
-			rD.pos.set_z(nextAltitude);
-			f->getRoute()->push_back(rD);
-		}else{
-			rA.pos.set_z(nextAltitude);
-			f->getRoute()->push_back(rA);
-		}
-	}
-	*/
 	if( abs(closePoint.pos.get_x() - posA.get_x()) < 50 && f->getRoute()->size() <= 1){
-		std::cerr << "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" << '\n';
 		rB.pos.set_z(nextAltitude);
 		f->getRoute()->push_back(rB);
 		rC.pos.set_z(nextAltitude+550);
