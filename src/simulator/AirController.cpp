@@ -157,17 +157,15 @@ AirController::blackHole(Flight *f)
 		closePoint = *it;
 	}
 
-	if( f->getPosition().get_x() <= -10000 ){
-		f->setInBlackHole(true);
-	}
 
 	closeAltitude = closePoint.pos.get_z();
-	nextAltitude = closeAltitude + 1000;
+	nextAltitude = closeAltitude + 550;
 
 	Position posA(-11000.0, 0.0);
 	Position posB(-16000.0, -5000);
-	Position posC(-16000.0, 5000.0);
-	Position posD(-21000.0, 0.0);
+	Position posC(-21000.0, 0.0);
+	Position posD(-16000.0, 5000.0);
+
 
 	Route rA, rB, rC, rD;
 
@@ -187,21 +185,37 @@ AirController::blackHole(Flight *f)
 		f->setNewInBlackHole(false);
 	}
 
-//	if( f->getRoute()->size() == 1 && f->getInBlackHole() ){
-		if( closePoint.pos.get_x() == posA.get_x() ){
+/*
+	if( f->getRoute()->size() == 1 && f->getInBlackHole() ){
+		std::cerr << "SUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUU" << '\n';
+		if( abs(closePoint.pos.get_x() - posA.get_x()) < 200){
+			std::cerr << "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" << '\n';
 			rB.pos.set_z(nextAltitude);
-			f->getRoute()->push_front(rB);
-		}else if( closePoint.pos.get_x() == posB.get_x() && closePoint.pos.get_y() == posB.get_y()){
+			f->getRoute()->push_back(rB);
+		}else if( abs(closePoint.pos.get_x() - posB.get_x()) < 200 && abs(closePoint.pos.get_y() - posB.get_y()) <200 ){
 			rC.pos.set_z(nextAltitude);
-			f->getRoute()->push_front(rC);
-		}else if( closePoint.pos.get_x() == posC.get_x() && closePoint.pos.get_y() == posC.get_y()){
+			f->getRoute()->push_back(rC);
+		}else if( abs(closePoint.pos.get_x() - posC.get_x()) < 200 ){
 			rD.pos.set_z(nextAltitude);
-			f->getRoute()->push_front(rD);
+			f->getRoute()->push_back(rD);
 		}else{
 			rA.pos.set_z(nextAltitude);
-			f->getRoute()->push_front(rA);
+			f->getRoute()->push_back(rA);
 		}
-//	}
+	}
+	*/
+	if( abs(closePoint.pos.get_x() - posA.get_x()) < 50 && f->getRoute()->size() <= 1){
+		std::cerr << "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" << '\n';
+		rB.pos.set_z(nextAltitude);
+		f->getRoute()->push_back(rB);
+		rC.pos.set_z(nextAltitude+550);
+		f->getRoute()->push_back(rC);
+		rD.pos.set_z(nextAltitude+550);
+		f->getRoute()->push_back(rD);
+		rA.pos.set_z(nextAltitude+550);
+		f->getRoute()->push_back(rA);
+	}
+
 }
 
 
@@ -209,12 +223,11 @@ void
 AirController::goInfine(Flight *f)
 {
 	Position posFustrada(-10000.0, 0.0, 5000.0);
-	Position posA(-11000.0, 0.0);
 
-	Route r0, rA;
+	Route r0;
 
 	r0.pos = posFustrada;
-	r0.speed = 210;
+	r0.speed = 260;
 
 	if(f->getNewInIntinite())
 		std::cerr << "INFINITOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO" << '\n';
@@ -223,7 +236,11 @@ AirController::goInfine(Flight *f)
 		f->getRoute()->clear();
 		f->getRoute()->push_front(r0);
 		f->setNewInIntinite(false);
-		blackHole(f);//---------------------
+		//blackHole(f);//---------------------
+	}
+
+	if( f->getPosition().get_x() <= posFustrada.get_x() ){
+		f->setInBlackHole(true);
 	}
 }
 
@@ -234,11 +251,12 @@ AirController::doWork()
   std::list<Flight*>::iterator it;
 
   for(it = flights.begin(); it!=flights.end(); ++it){
-
     anticollisionSystem(*it);
     if( !(*it)->getInInfinite() ){
 			finalAprox(*it);
 			landing(*it);
+		}else if( (*it)->getInBlackHole() ){
+			blackHole(*it);
 		}else
 			goInfine(*it);
   }
