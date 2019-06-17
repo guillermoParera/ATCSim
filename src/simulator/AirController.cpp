@@ -67,8 +67,10 @@ AirController::distanceFlightAirport(Flight *f)
 
 void
 AirController::anticollisionSystem(Flight *f)
-/*Se aborta la ruta del avion que esté más alejado de la pista, en caso de encontrarse con otro a una cierta distancia de seguridad,
- subiendo a este de altutud, y bajando, por consiguiente, al que está mas cerca */
+/*
+Se aborta la ruta del avion que esté más alejado de la pista, en caso de encontrarse con otro a una cierta distancia de seguridad,
+ subiendo a este de altutud, y bajando, por consiguiente, al que está mas cerca
+*/
 {
   std::list<Flight*> flights = Airport::getInstance()->getFlights();
   std::list<Flight*>::iterator it;
@@ -93,6 +95,7 @@ AirController::anticollisionSystem(Flight *f)
 						if ((*it)->getInInfinite() == false)
 							(*it)->setInInfinite(true);
 					}
+				}
     	}
     }
   }
@@ -130,15 +133,15 @@ AirController::landing(Flight *f)
 
 void
 AirController::blackHole(Flight *f)
-{
 /*
 El avion esta en un circuito sin fin el el que solo sube
 */
+{
 
 	float closeAltitude;
 	float nextAltitude;
+  float delta_altitude;
 	Route closePoint;
-	float delta_altitude = 550;
 
 	std::list<Route>::iterator it;
 	for( it = f->getRoute()->begin(); it != f->getRoute()->end(); ++it){
@@ -147,6 +150,7 @@ El avion esta en un circuito sin fin el el que solo sube
 
 
 	closeAltitude = closePoint.pos.get_z();
+  delta_altitude = 550;
 	nextAltitude = closeAltitude + delta_altitude;
 
 	Position posA(-11000.0, 0.0);
@@ -172,7 +176,9 @@ El avion esta en un circuito sin fin el el que solo sube
 		f->setNewInBlackHole(false);
 	}
 
-/*Cada vez que el avion pase cerca del punto A, se le añaden una vuelta mas la ruta*/
+/*
+Cada vez que el avion pase cerca del punto A, se le añaden una vuelta mas la ruta
+*/
 	if( abs(closePoint.pos.get_x() - posA.get_x()) < 50 && f->getRoute()->size() <= 1){
 		rB.pos.set_z(nextAltitude);
 		f->getRoute()->push_back(rB);
@@ -183,6 +189,7 @@ El avion esta en un circuito sin fin el el que solo sube
 		rA.pos.set_z(nextAltitude+delta_altitude*3);
 		f->getRoute()->push_back(rA);
 	}
+
 }
 
 
@@ -200,7 +207,6 @@ AirController::goInfine(Flight *f)
 		f->getRoute()->clear();
 		f->getRoute()->push_front(r0);
 		f->setNewInIntinite(false);
-		//blackHole(f);//---------------------
 	}
 
 	if( f->getPosition().get_x() <= posFustrada.get_x() ){
