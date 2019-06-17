@@ -41,7 +41,6 @@ public:
 	float distanceFlightAirport(Flight *f);
 	void anticollisionSystem(Flight *f1);
 
-	void finalAprox(Flight *f);
 	void landing(Flight *f);
 
 	void goInfine(Flight *it);

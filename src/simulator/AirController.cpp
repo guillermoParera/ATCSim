@@ -67,6 +67,8 @@ AirController::distanceFlightAirport(Flight *f)
 
 void
 AirController::anticollisionSystem(Flight *f)
+/*Se aborta la ruta del avion que esté más alejado de la pista, en caso de encontrarse con otro a una cierta distancia de seguridad,
+ subiendo a este de altutud, y bajando, por consiguiente, al que está mas cerca */
 {
   std::list<Flight*> flights = Airport::getInstance()->getFlights();
   std::list<Flight*>::iterator it;
@@ -78,40 +80,22 @@ AirController::anticollisionSystem(Flight *f)
 			float distance_to_airport1 = distanceFlightAirport(f);
 			float distance_to_airport2 = distanceFlightAirport(*it);
       if (distance < dist_seguridad2){
-        /*float h2 = sqrt(distance * distance + dist_seguridad2 * dist_seguridad2);
-        float alpha2 = asin(dist_seguridad2/h2);
-				*/
-				float alpha2 = asin(5*M_PI/180);
 				float cabeceo = asin(5*M_PI/180);
-
 				if( !f->getInInfinite() ){
 					if (distance_to_airport1 > distance_to_airport2){
-						//f->setBearing(alpha2);
 						f->setInclination(cabeceo); //sube
 						(*it)->setInclination(-cabeceo); // baja
 						if (f->getInInfinite() == false)
 							f->setInInfinite(true);
 					}else if (distance_to_airport1 < distance_to_airport2){
-						//(*it)->setBearing(-alpha2);
 						(*it)->setInclination( f->getInclination() + cabeceo ); //sube
 						f->setInclination( f->getInclination() - cabeceo ); // baja
 						if ((*it)->getInInfinite() == false)
 							(*it)->setInInfinite(true);
 					}
-				}else if(f->getPosition().get_x() < -10000 ){
-					/*	f->setBearing( f->getBearing() + alpha2 );
-						(*it)->setBearing( f->getBearing() - alpha2 );*/
-					}
-//					std::cerr << "ANTIIIIIIIII COLISIOOOOOOOOOOOOOOOOOOOOOON" << '\n';
     	}
     }
   }
-}
-
-void
-AirController::finalAprox(Flight *f)
-{
-	;
 }
 
 void
@@ -147,10 +131,14 @@ AirController::landing(Flight *f)
 void
 AirController::blackHole(Flight *f)
 {
+/*
+El avion esta en un circuito sin fin el el que solo sube
+*/
 
 	float closeAltitude;
 	float nextAltitude;
 	Route closePoint;
+	float delta_altitude = 550;
 
 	std::list<Route>::iterator it;
 	for( it = f->getRoute()->begin(); it != f->getRoute()->end(); ++it){
@@ -159,7 +147,7 @@ AirController::blackHole(Flight *f)
 
 
 	closeAltitude = closePoint.pos.get_z();
-	nextAltitude = closeAltitude + 550;
+	nextAltitude = closeAltitude + delta_altitude;
 
 	Position posA(-11000.0, 0.0);
 	Position posB(-16000.0, -15000);
@@ -180,22 +168,21 @@ AirController::blackHole(Flight *f)
 
 
 	if(f->getNewInBlackHole()){
-		std::cerr << "BLACK HOLEEEEEEEEEEEEEEEEEEEE" << '\n';
 		f->getRoute()->push_back(rA);
 		f->setNewInBlackHole(false);
 	}
 
+/*Cada vez que el avion pase cerca del punto A, se le añaden una vuelta mas la ruta*/
 	if( abs(closePoint.pos.get_x() - posA.get_x()) < 50 && f->getRoute()->size() <= 1){
 		rB.pos.set_z(nextAltitude);
 		f->getRoute()->push_back(rB);
-		rC.pos.set_z(nextAltitude+550);
+		rC.pos.set_z(nextAltitude+delta_altitude);
 		f->getRoute()->push_back(rC);
-		rD.pos.set_z(nextAltitude+550);
+		rD.pos.set_z(nextAltitude+delta_altitude*2);
 		f->getRoute()->push_back(rD);
-		rA.pos.set_z(nextAltitude+550);
+		rA.pos.set_z(nextAltitude+delta_altitude*3);
 		f->getRoute()->push_back(rA);
 	}
-
 }
 
 
@@ -208,9 +195,6 @@ AirController::goInfine(Flight *f)
 
 	r0.pos = posFustrada;
 	r0.speed = 260;
-
-	if(f->getNewInIntinite())
-		std::cerr << "INFINITOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO" << '\n';
 
 	if( !f->getRoute()->empty() && f->getNewInIntinite() ){
 		f->getRoute()->clear();
@@ -233,7 +217,6 @@ AirController::doWork()
   for(it = flights.begin(); it!=flights.end(); ++it){
     anticollisionSystem(*it);
     if( !(*it)->getInInfinite() ){
-			finalAprox(*it);
 			landing(*it);
 		}else if( (*it)->getInBlackHole() ){
 			blackHole(*it);
